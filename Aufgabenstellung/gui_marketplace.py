@@ -6,6 +6,7 @@ import tkinter as tk
 import threading
 
 from auctionapp_init import AuctionAppInit
+#Test
 
 
 class AuctionApp(AuctionAppInit):
