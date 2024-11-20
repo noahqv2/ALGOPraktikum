@@ -1,4 +1,4 @@
-# Definiert die Klassen Praktikumsgruppen und SetNode, implementiert als Dictionary
+    # Definiert die Klassen Praktikumsgruppen und SetNode, implementiert als Dictionary
 
 # marketplace.users erbt von marketplace.user und marketplace.user erbt von marketplace.praktikumsgruppen (folglich erbt users auch praktikumsgruppen)
 # Strukturiert ist marketplace.praktikumsgruppen > marketplace.user > marketplace.users
@@ -22,6 +22,7 @@ class SetNode:
         # TODO: werden nur für Praktikum 3 benötigt
         self._parent = self  # parent Knoten des SetNode Objekts. self bedeutet, dass der Knoten ein Wurzelknoten ist
         self._weight = 1  # Gewicht (Anzahl Knoten) des (Teil-)Baumes, der in dem SetNode Objekt verwurzelt ist
+        self._praktikumsgruppe = []
 
     # *** PUBLIC SET methods ***
 
@@ -52,7 +53,7 @@ class Praktikumsgruppen(dict):
         Initializes a new Praktikumsgruppen object.
         """
         super().__init__()
-
+        self._groups = {}
     # *** PUBLIC methods ***
 
     # TODO in Praktikum 3: implement find(node), find_byid(user_id, return_id=False) and
@@ -82,7 +83,19 @@ class Praktikumsgruppen(dict):
             groupnumbers (list): A list of group numbers corresponding to the user IDs.
         """
         # TODO: implement in Praktikum 1
-        pass
+
+        for user_id, group_number in zip(user_ids, groupnumbers):
+            self._groups.setdefault(group_number, []).append(user_id)
+
+        print(self._groups)
+#        new_userid_list = []
+#        for group_id, group_members in self._groups.items():
+#            print(group_members)
+#            if "nasemota" in group_members:
+#                for member in group_members:
+#                    new_userid_list.append(member)
+#                break
+#        print (new_userid_list)
 
     # *** PUBLIC GET methods ***
 
@@ -97,7 +110,15 @@ class Praktikumsgruppen(dict):
             list: A list of user IDs in the same group.
         """
         # TODO: implement in Praktikum 1
-        pass
+
+        new_userid_list = []
+        for group_num,group_members in self._groups.items():
+            if user_id in group_members:
+                for member in group_members:
+                    new_userid_list.append(member)
+                break
+        return new_userid_list
+
 
     # *** PUBLIC STATIC methods ***
 
