@@ -1,5 +1,7 @@
 # Definiert die Klassen Praktikumsgruppen und SetNode, implementiert als Dictionary
 
+# marketplace.users erbt von marketplace.user und marketplace.user erbt von marketplace.praktikumsgruppen (folglich erbt users auch praktikumsgruppen)
+# Strukturiert ist marketplace.praktikumsgruppen > marketplace.user > marketplace.users
 
 class SetNode:
     """
