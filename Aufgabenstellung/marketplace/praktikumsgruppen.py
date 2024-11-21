@@ -3,6 +3,8 @@
 # marketplace.users erbt von marketplace.user und marketplace.user erbt von marketplace.praktikumsgruppen (folglich erbt users auch praktikumsgruppen)
 # Strukturiert ist marketplace.praktikumsgruppen > marketplace.user > marketplace.users
 
+# Die Nutzer des Marketplaces sind in einem Dictionary gespeichert.
+
 class SetNode:
     """
     TODO for students: die Klasse user.User erbt von SetNode. diese Klasse wird eigentlich erst in Praktikum 3 benötigt.
