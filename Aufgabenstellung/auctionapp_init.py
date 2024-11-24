@@ -14,6 +14,7 @@ import marketplace.auction
 import marketplace.systemmessages
 import marketplace.avl_tree
 from marketplace import avl_tree
+import csv
 
 
 class AuctionAppInit:
@@ -656,6 +657,22 @@ class AuctionAppInit:
         for product_name, count in tuple_list:
             self.trie.insert(product_name)
             self.avl_tree.insert(product_name, count)
+
+        #User IDs der user.csv Datei laden
+        user_ids = self.read_user_ids_from_csv('user.csv')
+
+        #User IDs in den Trie einfügen
+        for user_id in user_ids:
+            self.trie.insert(user_id)
+
+    def read_user_ids_from_csv(self, filepath):
+        user_ids = []                                                       #leere liste erstellen um User IDs dort zu speichern
+        with open(filepath, newline='', encoding='utf-8-sig') as csvfile:   #CSV-Datei im Lese modus öffnen
+            csvreader = csv.DictReader(csvfile)                             #DictReader zum einfacheren lesen der CSV-Datei
+            for row in csvreader:                                           #Solange User IDs holen bis man am ende des files ist
+                user_id = row['User-ID']                                    #User ID der aktuellen Zeile einlesen
+                user_ids.append(user_id)                                    #User Id der Liste hinzufügen
+        return user_ids                                                     #Liste mit User IDs übergeben
 
     def show_tooltip(self, suggestions):
         if self.tooltip:
