@@ -89,7 +89,7 @@ class Praktikumsgruppen(dict):
         for user_id, group_number in zip(user_ids, groupnumbers):
             self._groups.setdefault(group_number, []).append(user_id)
 
-        print(self._groups)
+        print(self._groups) #DEBUG
 #        new_userid_list = []
 #        for group_id, group_members in self._groups.items():
 #            print(group_members)
@@ -104,6 +104,7 @@ class Praktikumsgruppen(dict):
     def get_groupmembers(self, user_id):
         """
         Gets the members of the group containing the user.
+        f(n) is in O(n)
 
         Args:
             user_id (str): The ID of the user.
@@ -113,13 +114,13 @@ class Praktikumsgruppen(dict):
         """
         # TODO: implement in Praktikum 1
 
-        new_userid_list = []
-        for group_num,group_members in self._groups.items():
-            if user_id in group_members:
-                for member in group_members:
-                    new_userid_list.append(member)
-                break
-        return new_userid_list
+        new_userid_list = []                                    # +1
+        for group_num,group_members in self._groups.items():    # +3        } 117 & 118 n-mal
+            if user_id in group_members:                        # +5        }
+                for member in group_members:                    # +1        } group_members hat genau 4 mitglieder
+                    new_userid_list.append(member)              # +1*4      }
+                break                                           # +1
+        return new_userid_list                                  # +1
 
 
     # *** PUBLIC STATIC methods ***
