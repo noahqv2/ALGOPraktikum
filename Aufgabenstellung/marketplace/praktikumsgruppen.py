@@ -24,7 +24,8 @@ class SetNode:
         # TODO: werden nur für Praktikum 3 benötigt
         self._parent = self  # parent Knoten des SetNode Objekts. self bedeutet, dass der Knoten ein Wurzelknoten ist
         self._weight = 1  # Gewicht (Anzahl Knoten) des (Teil-)Baumes, der in dem SetNode Objekt verwurzelt ist
-        self._praktikumsgruppe = []
+        
+    _praktikumsgruppe = None
 
     # *** PUBLIC SET methods ***
 
@@ -84,12 +85,11 @@ class Praktikumsgruppen(dict):
             user_ids (list): A list of user IDs.
             groupnumbers (list): A list of group numbers corresponding to the user IDs.
         """
-        # TODO: implement in Praktikum 1
 
         for user_id, group_number in zip(user_ids, groupnumbers):
             self._groups.setdefault(group_number, []).append(user_id)
 
-        print(self._groups) #DEBUG
+#        print(self._groups) #DEBUG
 #        new_userid_list = []
 #        for group_id, group_members in self._groups.items():
 #            print(group_members)
@@ -112,10 +112,8 @@ class Praktikumsgruppen(dict):
         Returns:
             list: A list of user IDs in the same group.
         """
-        # TODO: implement in Praktikum 1
-
         new_userid_list = []                                    # +1
-        for group_num,group_members in self._groups.items():    # +3        } 117 & 118 n-mal
+        for group_num,group_members in self._groups.items():    # +3        } 115 & 116 n-mal
             if user_id in group_members:                        # +5        }
                 for member in group_members:                    # +1        } group_members hat genau 4 mitglieder
                     new_userid_list.append(member)              # +1*4      }
