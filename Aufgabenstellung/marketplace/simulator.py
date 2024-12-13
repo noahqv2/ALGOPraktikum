@@ -33,15 +33,19 @@ class Simulator:
 
     def randomly_rate_users(self, users: marketplace.users.Users, current_user_id):
         if self.stop_simulation:
+            print("early return")
             return
 
+        rated_users= []
         user_ids = [user_id for user_id in users.keys() if user_id != current_user_id]
 
         for _ in range(35):
             random_user = random.choice(user_ids)
             stars = random.randint(1,5)
             users[random_user].rate_user(stars)
+            rated_users.append(random_user)
 
+        return rated_users
     def stop(self):
         self.stop_simulation = True
 

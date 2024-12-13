@@ -35,7 +35,6 @@ class MaxHeap:
         # TODO:
 
         self.heap.append((bid_count, auction_id))
-        #print(auction_id, bid_count)
         self.auction_map[auction_id] = (bid_count, len(self.heap) - 1)
         self._heapify_up(len(self.heap) - 1)
 
@@ -54,14 +53,24 @@ class MaxHeap:
         index=self.auction_map[auction_id][1]
         self.heap[index] = (new_bid_count, auction_id)
         self.auction_map[auction_id] = (new_bid_count, index)
-        #print("IF STATEMENT:",new_bid_count, old_bid_count)
-        #print("OLD_BID_COUNT:",old_bid_count)
         if new_bid_count > old_bid_count:
             self._heapify_up(index)
         else:
             self._heapify_down(index)
         #raise NotImplementedError
 
+    def refresh_rating(self,rating,user_id):
+        if user_id in self.auction_map:
+            index=self.auction_map[user_id][1]
+            old_rating=self.heap[index][0]
+            self.heap[index] = (rating, user_id)
+            if old_rating < rating:
+                self._heapify_up(index)
+            else:
+                self._heapify_down(index)
+
+        else:
+            self.add_auction(user_id,rating)
     def remove(self, auction_id):
         """ Entfernt die Auktion aus dem Max-Heap.
             Wenn die Auktion nicht im Heap ist, wird keine Auktion entfernt.
@@ -76,9 +85,9 @@ class MaxHeap:
 
         index= self.auction_map[auction_id][1]
         self._swap(index, -1) # Tauscht es mit dem letzten Element
-        del self.auction_map[auction_id] # del & pop sollten selbstverständlich sein
+        del self.auction_map[auction_id] # löscht es aus der map und dann aus dem heap
         self.heap.pop()
-        self._heapify_down(index) # Wird nach unten "Heapified" um ihn einzusortieren
+        self._heapify_down(index) # Keine Lazy deletion
 
     # *** PUBLIC GET methods ***
 
@@ -91,7 +100,7 @@ class MaxHeap:
 
         if not self.heap:
             return None
-        self.print_heap()
+        #self.print_heap()
         return self.heap[0][0], self.heap[0][1]
 
     def get_auction_bidders(self, auction_id):
@@ -107,6 +116,10 @@ class MaxHeap:
         if auction_id in self.auction_map:
             return self.auction_map[auction_id][0]
         return None
+
+    def get_best_user(self):
+        return self.heap[0]
+
 
     # *** PRIVATE methods ***
 
@@ -157,9 +170,6 @@ class MaxHeap:
         largest = index
         left = 2 * index + 1
         right = 2 * index + 2
-        #print("Printing this now:", self.heap[largest])
-        #print("Printing this now2:", self.heap[left])
-        #print("Printing this now3:", self.heap[right][1])
         if left < heap_length and self.heap[left][0] > self.heap[largest][0]:
                 largest = left
 

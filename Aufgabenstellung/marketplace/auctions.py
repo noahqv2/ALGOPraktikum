@@ -4,7 +4,7 @@ import marketplace.auction
 import marketplace.item
 import marketplace.users
 import marketplace.simulator
-from marketplace.max_heap import MaxHeap
+from .max_heap import MaxHeap
 import random
 import threading
 import csv
@@ -42,7 +42,7 @@ class Auctions(dict):
         #  get_top_rated_user() (s.u.) in konstanter Zeit zurück geben zu können. auf der GUI gibt es noch keinen Button
         #  mit dem Sie andere Nutzer bewerten können. das wird alles simuliert in simulator.py. Sie können von jedem
         #  User über die Methode user.User.get_rating_stars_mean() die mittlere Anzahl Sterne abfragen.
-        self._heap_users_rated = None
+        self._heap_users_rated = MaxHeap()
 
         self._users = marketplace.users.Users("user.csv")
 
@@ -234,6 +234,11 @@ class Auctions(dict):
             return self._heap.get_auction_with_max_bidders()[1]
 
     # TODO: in 3. Praktikum: nutze diese Methode und passe diese evtl. an
+    def update_rating(self, user_id):
+        if self._heap_users_rated is not None:
+            rating=self._users[user_id].get_rating_stars_mean()
+            self._heap_users_rated.refresh_rating(rating,user_id)
+
     def get_top_rated_user(self, with_num_stars=False):
         """
         Returns user ID of user that got the highest rating of other users
@@ -242,26 +247,29 @@ class Auctions(dict):
         """
         # TODO: do not use this part
         # stupid brute force implementation
-        max_user = None
-        max_stars = 0
-        for user_id, user in self._users.items():
-            stars_mean = user.get_rating_stars_mean()
-            if stars_mean > max_stars:
-                max_stars = stars_mean
-                max_user = user_id
-
-        if with_num_stars:
-            return [max_stars, max_user]
-        else:
-            return max_user
+        #max_user = None
+        #max_stars = 0
+        #for user_id, user in self._users.items():
+        #    stars_mean = user.get_rating_stars_mean()
+        #    if stars_mean > max_stars:
+        #        max_stars = stars_mean
+        #        max_user = user_id
+        #if with_num_stars:
+        #    return [max_stars, max_user]
+        #else:
+        #    return max_user
 
         # TODO: instead use and probably change this
-        # if not self._heap_users_rated:
-        #     return None
-        # if with_num_stars:
-        #     return self._heap_users_rated.get_top_user()
-        # else:
-        #     return self._heap_users_rated.get_top_user()[1]
+
+
+        if not self._heap_users_rated or self._heap_users_rated.heap == []:
+            #print("returning none") / Will always return None before logging in
+            return None
+        best_user = self._heap_users_rated.get_best_user()
+        if with_num_stars:
+            return best_user # Mit Rating
+        else:
+            return best_user[1] # Ohne Rating
 
     def get_active_auctions(self):
         auctions_active = {}
@@ -360,7 +368,14 @@ class Auctions(dict):
 
         self._my_simulator.create_random_auctions(self, current_user_id)
 
-        self._my_simulator.randomly_rate_users(self._users, current_user_id)
+        #self._my_simulator.randomly_rate_users(self._users, current_user_id)
+
+        rated_users= self._my_simulator.randomly_rate_users(self._users, current_user_id)
+
+
+        if rated_users:
+            for user in rated_users:
+                self.update_rating(user)
 
         timer = threading.Timer(30, self._start_simulator, args=(current_user_id,))
         timer.start()
