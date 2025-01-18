@@ -51,7 +51,8 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         #  from graph algorithm
         distance = sum(abs(a - b) for a, b in zip(user1.gps_coords(), user2.gps_coords()))
 
-        return distance
+        return 0    # Logik fehlt hier, Aufg 1.3
+        #return distance
 
     # *** PUBLIC GET methods ***
 
@@ -131,25 +132,33 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         mutual_friends_count = self.get_mutual_friends(user_id)
         # TODO for students: Implement this method by filling the list suggested_friends
         suggested_friends = []
+        close_and_connected_friends = []
         print("mututal_friend_count")
         print( mutual_friends_count)
-        for friend in mutual_friends_count:
+        for other_user_id in self.keys():
+            if other_user_id == user_id:
+                continue
 
-            if distance_threshold > self.calc_distance_between_users(friend, user_id):
+            if distance_threshold > self.calc_distance_between_users(other_user_id, user_id):
                 # TODO Luca glaube ich (1.3)
-                print("passing")
-                pass
-            elif friend in mutual_friends_count:
-                print("comparing inner if:")
-                if mutual_friends_count[friend] >= num_common_friends:
-                    print("Still in Loop\n")
-                    suggested_friends.append(friend)
+                if self.are_users_connected(user_id, other_user_id):
+                    close_and_connected_friends.append(other_user_id)
+
+                #print(f"inside distance threshhold{close_and_connected_friends}")
+            elif other_user_id in mutual_friends_count:
+                #print("comparing inner if:")
+                if mutual_friends_count[other_user_id] >= num_common_friends:
+                    #print("Still in Loop\n")
+                    suggested_friends.append(other_user_id)
+                #print(f"inside elif{suggested_friends}")
             else:
-                print(f"friend {friend} in mutual friends list.\n")
+                print(f"friend {other_user_id} in mutual friends list.\n")
         if pretty_print:
             suggested_friends = [self[friend].pretty_print() for friend in suggested_friends]
-        print(suggested_friends)
-        return suggested_friends
+            close_and_connected_friends= [self[friend].pretty_print() for friend in close_and_connected_friends]
+        #print(f"printing suggested friends {suggested_friends}")
+        #print(f"printing close and connected friends{close_and_connected_friends}")
+        return suggested_friends + close_and_connected_friends
 
     def are_users_connected(self, user_id1, user_id2, degree=3):
         """
@@ -211,7 +220,7 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
 
         if weight[uroot]<weight[vroot]:
             parent[uroot] = vroot #Maybe tauschen?
-        elif weight[uroot] > weight(vroot):
+        elif weight[uroot] > weight[vroot]:
             parent[vroot] = uroot
         else:
             parent[vroot] = uroot
