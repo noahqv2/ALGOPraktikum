@@ -100,7 +100,7 @@ class MaxHeap:
 
         if not self.heap:
             return None
-        #self.print_heap()
+        #self.print_heap() #DEBUG
         return self.heap[0][0], self.heap[0][1]
 
     def get_auction_bidders(self, auction_id):

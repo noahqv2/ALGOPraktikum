@@ -130,12 +130,25 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         """
         mutual_friends_count = self.get_mutual_friends(user_id)
         # TODO for students: Implement this method by filling the list suggested_friends
-
         suggested_friends = []
+        print("mututal_friend_count")
+        print( mutual_friends_count)
+        for friend in mutual_friends_count:
 
+            if distance_threshold > self.calc_distance_between_users(friend, user_id):
+                # TODO Luca glaube ich (1.3)
+                print("passing")
+                pass
+            elif friend in mutual_friends_count:
+                print("comparing inner if:")
+                if mutual_friends_count[friend] >= num_common_friends:
+                    print("Still in Loop\n")
+                    suggested_friends.append(friend)
+            else:
+                print(f"friend {friend} in mutual friends list.\n")
         if pretty_print:
             suggested_friends = [self[friend].pretty_print() for friend in suggested_friends]
-
+        print(suggested_friends)
         return suggested_friends
 
     def are_users_connected(self, user_id1, user_id2, degree=3):
@@ -146,14 +159,66 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :param degree: only look for possible friend connections up to this degree of friendship
         :return: True, if user_id1 and user_id2 are friends over some edges up to the given degree, else False
         """
+        print("Inside are users_connected")
         if user_id1 not in self or user_id2 not in self:
             return False
-
         # TODO for students: Implement this method
+        print("After first return")
 
-        return False
+        all_users= set()
+        all_users.add(user_id1)
+        all_users.add(user_id2)
+
+        queue= [user_id1]
+        visited= {user_id1}
+        current_degree = 0
+        while queue and current_degree <= degree:
+            next_level = []
+            for user in queue:
+                friends=self.get_mutual_friends(user)
+                for friend in friends:
+                    if friend not in visited:
+                        all_users.add(friend)
+                        next_level.append(friend)
+                        visited.add(friend)
+            queue=next_level
+            current_degree += 1
+
+        parent={}
+        weight={}
+        for user in all_users:
+            parent[user]=user
+            weight[user]=1
+        for user in all_users:
+            friends=self.get_mutual_friends(user)
+            for friend in friends:
+                if friend in all_users:
+                    self.union(parent, weight,user, friend)
+
+        print(f"printing return inside are_users_connected {self.find(parent, user_id1)==self.find(parent, user_id2)}")
+        return self.find(parent, user_id1)==self.find(parent, user_id2)
 
     # *** PUBLIC STATIC methods ***
+
+    def find(self,parent, i):
+        if parent[i]==i:
+            return i
+        return self.find(parent,parent[i])
+
+    def union(self,parent,weight,u,v):
+        uroot = self.find(parent,u)
+        vroot = self.find(parent,v)
+
+        if weight[uroot]<weight[vroot]:
+            parent[uroot] = vroot #Maybe tauschen?
+        elif weight[uroot] > weight(vroot):
+            parent[vroot] = uroot
+        else:
+            parent[vroot] = uroot
+            weight[uroot]+=1
+
+
+
 
     # *** PRIVATE methods ***
 
