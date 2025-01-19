@@ -9,23 +9,40 @@
 import csv
 import marketplace.user
 import marketplace.praktikumsgruppen
+import osmnx as ox
+map_graph = ox.graph.graph_from_address('Gummersbach, Steinmüllerallee 1, Germany', dist=5000,network_type='bike')
+origin_point = (50.985108, 7.542490)  # Breiten- und Längengrad
+destination_point = (51.022255, 7.562705)
+origin = ox.distance.nearest_nodes(map_graph, origin_point[1], origin_point[0])
+destination = ox.distance.nearest_nodes(map_graph, destination_point[1], destination_point[0])
+shortest_path = ox.routing.shortest_path(map_graph, origin, destination, weight='length')
+
+import networkx as nx
 
 
 class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
     # *** CONSTRUCTORS ***
     def __init__(self, csvfile, *args):
+        self.users={}
+        #self.parent=self
+
+        #self.weight=1
         super().__init__()
 
         self._read_users_from_csvfile(csvfile)
 
         self._read_friends_csv('friends.csv')
 
+
         # erstelle Praktikumsgruppen als Menge disjunkter Mengen bzw. als dictionary (1. und 2. Praktikum)
-        super().create_groups(list(self.keys()), self._groupnumbers)
+
+        super().create_groups(list(self.users.keys()), self._groupnumbers)
 
     # *** PUBLIC SET methods ***
 
     # *** PUBLIC methods ***
+    def get_user(self,user_id):
+        return self.users.get(user_id)
 
     def add(self, user_id, password, name_family="", name_first="", gps_coord=(None, None), address=""):
         """
@@ -38,21 +55,55 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :param gps_coord: Tuple with Längen- und Breitengrad des erfundenen Wohnorts des Nutzers
         :param address: String mit Adresse die zu GPS Koordinaten gehört
         """
-        self[user_id] = marketplace.user.User(user_id, password, name_family, name_first, gps_coord, address)
+        self.users[user_id] = marketplace.user.User(user_id, password, name_family, name_first, gps_coord, address)
+
 
     def calc_distance_between_users(self, user_id1, user_id2):
         # TODO for students: calculate distance between gps coordinates of user1 and user2 using a map and an
-        #  algorithm that calculates the shortest distance on the map
+         # algorithm that calculates the shortest distance on the map
+        distance=0.0
+        if map_graph is None:
+            print("Graph konnte nicht geladen werden")
+            return None
+        try:
+            user1 = self.users.get(user_id1)
+            user2 = self.users.get(user_id2)
+            if not user1 or user2:
+                print("one or both not found")
+                return 10000
 
-        user1 = self[user_id1]
-        user2 = self[user_id2]
+            #point1 = user1.gps_coord or (ox.geocode(user1.address) if user1.address else None)
+            point1=user1.gps_coord
+            if point1 is None and user1.address:
+                point1 = user1.gps_coord
 
+            if point1 is None:
+                print("could not get coordinates point1")
+                return 10000
+            #point2 = user2.gps_coord or (ox.geocode(user2.address) if user2.address else None)
+            point2 = user2.gps_coord
+            if point2 is None and user2.address:
+                point2 = user2.gps_coord
+
+            if point2 is None:
+                print("could not get coordinates for point2")
+                return 10000
+            node1=ox.distance.nearest_nodes(map_graph, point1[1], point1[0])
+            node2=ox.distance.nearest_nodes(map_graph, point2[1], point2[0])
+            route=nx.shortest_path(map_graph, node1,node2,weight='length')
+            print(route)
+            distance=nx.path_weight(map_graph, route, weight='length')
+            print(distance)
+            return distance
+        except Exception as e:
+            print(f"error:{e}")
         # TODO for students: replace this naive implementation of distance manhattan with distance gotten
         #  from graph algorithm
-        distance = sum(abs(a - b) for a, b in zip(user1.gps_coords(), user2.gps_coords()))
+        #distance=nx.path_weight(map_graph, route,)
 
-        return 0    # Logik fehlt hier, Aufg 1.3
-        #return distance
+        #distance = sum(abs(a - b) for a, b in zip(user1.gps_coords(), user2.gps_coords()))
+
+        return distance
 
     # *** PUBLIC GET methods ***
 
@@ -61,13 +112,13 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         return node.name()
 
     def num_users(self):
-        return len(self.keys())
+        return len(self.users.keys())
 
     def password_valid(self, user_id, password):
-        return self[user_id].password_valid(password)
+        return self.users.get(user_id).password_valid(password)
 
     def get_user_pretty_print_for_list(self, user_id):
-        return (self[user_id].pretty_print() + "\t in Praktikumsgruppe repräsentiert durch: " +
+        return (self.users.get(user_id).pretty_print() + "\t in Praktikumsgruppe repräsentiert durch: " +
                 self.find_byid(user_id, True))
 
     def get_friends_andgroupmembers_pretty_print(self, user_id):
@@ -77,7 +128,7 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :param user_id: usually the current user id
         :return:
         """
-        friends = self[user_id].friends()
+        friends = self.users.get(user_id).friends()
 
         friend_names = [self.get_user_pretty_print_for_list(friend) for friend in friends]
 
@@ -100,11 +151,11 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :return: dictionary with friends of the friends of given user_id together with the information with how
         many friends of user_id these friends are friends with
         """
-        friends = self[user_id].friends()
+        friends = self.users.get(user_id).friends()
         mutual_friends_count = {}
 
         for friend in friends:
-            friend_friends = self[friend].friends()
+            friend_friends = self.users.get(friend).friends()
             for mutual_friend in friend_friends:
                 if mutual_friend != user_id and mutual_friend not in friends:
                     if mutual_friend in mutual_friends_count:
@@ -133,32 +184,66 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         # TODO for students: Implement this method by filling the list suggested_friends
         suggested_friends = []
         close_and_connected_friends = []
-        print("mututal_friend_count")
-        print( mutual_friends_count)
-        for other_user_id in self.keys():
+        #print("mututal_friend_count")
+        #print( mutual_friends_count)
+        #print(f"printing self.keys {self.keys()}")
+        for other_user_id in self.users:
             if other_user_id == user_id:
                 continue
-
             if distance_threshold > self.calc_distance_between_users(other_user_id, user_id):
-                # TODO Luca glaube ich (1.3)
                 if self.are_users_connected(user_id, other_user_id):
                     close_and_connected_friends.append(other_user_id)
-
-                #print(f"inside distance threshhold{close_and_connected_friends}")
             elif other_user_id in mutual_friends_count:
-                #print("comparing inner if:")
                 if mutual_friends_count[other_user_id] >= num_common_friends:
-                    #print("Still in Loop\n")
                     suggested_friends.append(other_user_id)
                 #print(f"inside elif{suggested_friends}")
             else:
                 print(f"friend {other_user_id} in mutual friends list.\n")
+
+        friends_and_group_members = self.get_friends_andgroupmembers_pretty_print(user_id)
+
+        # Extract user IDs from pretty printed strings if necessary
+        friends_and_group_member_ids = []
+        if friends_and_group_members and isinstance(friends_and_group_members[0],
+                                                    str):  # Check if it's a list of strings
+            import re  # Needed to import re for regex
+            for member_str in friends_and_group_members:
+                match = re.search(r"GM-ID: (\w+)", member_str)  # Extract GM-ID using regex
+                if match:
+                    friends_and_group_member_ids.append(match.group(1))
+        else:  # if it is not a string, then it is a list of user_ids
+            friends_and_group_member_ids = friends_and_group_members
+
+        # Filter suggested friends
+        suggested_friends_filtered = []
+        for friend_id in suggested_friends:
+            if isinstance(friend_id, str):
+                match = re.search(r"GM-ID: (\w+)", friend_id)  # Extract GM-ID using regex
+                if match:
+                    friend_id = match.group(1)
+                else:
+                    continue  # if it is not a valid string, then continue
+            if friend_id not in friends_and_group_member_ids:
+                suggested_friends_filtered.append(friend_id)
+
+        # Filter close and connected friends
+        close_and_connected_friends_filtered = []
+        for friend_id in close_and_connected_friends:
+            if isinstance(friend_id, str):
+                match = re.search(r"GM-ID: (\w+)", friend_id)  # Extract GM-ID using regex
+                if match:
+                    friend_id = match.group(1)
+                else:
+                    continue  # if it is not a valid string, then continue
+            if friend_id not in friends_and_group_member_ids:
+                close_and_connected_friends_filtered.append(friend_id)
+
         if pretty_print:
-            suggested_friends = [self[friend].pretty_print() for friend in suggested_friends]
-            close_and_connected_friends= [self[friend].pretty_print() for friend in close_and_connected_friends]
-        #print(f"printing suggested friends {suggested_friends}")
-        #print(f"printing close and connected friends{close_and_connected_friends}")
-        return suggested_friends + close_and_connected_friends
+            suggested_friends_filtered = [self.users.get(friend).pretty_print() for friend in suggested_friends_filtered]
+            close_and_connected_friends_filtered = [self.users.get(friend).pretty_print() for friend in close_and_connected_friends_filtered]
+
+        return suggested_friends_filtered + close_and_connected_friends_filtered
+        #return suggested_friends + close_and_connected_friends
 
     def are_users_connected(self, user_id1, user_id2, degree=3):
         """
@@ -168,11 +253,12 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :param degree: only look for possible friend connections up to this degree of friendship
         :return: True, if user_id1 and user_id2 are friends over some edges up to the given degree, else False
         """
-        print("Inside are users_connected")
-        if user_id1 not in self or user_id2 not in self:
+
+        if user_id1 not in self.users or user_id2 not in self.users:
+            print("returning false")
             return False
         # TODO for students: Implement this method
-        print("After first return")
+
 
         all_users= set()
         all_users.add(user_id1)
@@ -193,38 +279,22 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
             queue=next_level
             current_degree += 1
 
-        parent={}
-        weight={}
-        for user in all_users:
-            parent[user]=user
-            weight[user]=1
         for user in all_users:
             friends=self.get_mutual_friends(user)
             for friend in friends:
                 if friend in all_users:
-                    self.union(parent, weight,user, friend)
+                    self.union(user, friend)
 
-        print(f"printing return inside are_users_connected {self.find(parent, user_id1)==self.find(parent, user_id2)}")
-        return self.find(parent, user_id1)==self.find(parent, user_id2)
+       # print(f"printing return inside are_users_connected {self.find(parent, user_id1)==self.find(parent, user_id2)}")
+        return self.find( user_id1)==self.find( user_id2)
 
     # *** PUBLIC STATIC methods ***
 
-    def find(self,parent, i):
-        if parent[i]==i:
-            return i
-        return self.find(parent,parent[i])
+    def find(self,parent):
+        return super().find(parent)
 
-    def union(self,parent,weight,u,v):
-        uroot = self.find(parent,u)
-        vroot = self.find(parent,v)
-
-        if weight[uroot]<weight[vroot]:
-            parent[uroot] = vroot #Maybe tauschen?
-        elif weight[uroot] > weight[vroot]:
-            parent[vroot] = uroot
-        else:
-            parent[vroot] = uroot
-            weight[uroot]+=1
+    def union(self,parent,weight):
+        super().union(parent,weight)
 
 
 
@@ -266,9 +336,21 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
             for row in csvreader:
                 user_id = row[0]
                 friends = row[1].split(', ')
-                self[user_id].friends_add_list(friends)
-                for friend in friends:  # gehe alle Freunde durch und füge user_id ebenfalls als Freund hinzu
-                    self[friend].friends_add(user_id)
+                #self[user_id].friends_add_list(friends)
+                user=self.users.get(user_id)
+               # for friend in friends:  # gehe alle Freunde durch und füge user_id ebenfalls als Freund hinzu
+                #    self[friend].friends_add(user_id)
+                if user:
+                    user.friends_add_list(friends)
+                    for friend in friends:
+                        friend_user = self.users.get(friend)
+                        if friend_user:
+                            friend_user.friends_add(user_id)
+                        else:
+                            print("")
+                else:
+                    print("")
+
 
     # *** PUBLIC methods to return class properties ***
 

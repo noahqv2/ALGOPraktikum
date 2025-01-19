@@ -13,8 +13,15 @@ class Simulator:
             return
 
         users = auctions.users()
+       # user_ids = [
+       #     user_id
+       #     for user_id in users.users
+       #     if (print(f"Checking User ID: {user_id}"), user_id != current_user_id)[1]
+       #     # Prints and checks if the user_id is not current_user_id
+       # ]
+        #print(f"Final user_ids: {user_ids}")  # Print the final list
 
-        user_ids = [user_id for user_id in users.keys() if user_id != current_user_id]
+        user_ids = [user_id for user_id in users.users if user_id != current_user_id]
 
         auctions._place_random_bids(num_auctions, user_ids, True, current_user_id)
 
@@ -22,8 +29,8 @@ class Simulator:
         if self.stop_simulation:
             return
 
-        user_ids = [user_id for user_id in auctions.users().keys() if user_id != current_user_id]
-
+        user_ids = [user_id for user_id in auctions.users().users if user_id != current_user_id]
+        #user_ids = [user_id for user_id in users.users if user_id != current_user_id]
         for _ in range(5):
             random_user = random.choice(user_ids)
             item_name = "Kartoffelschäler"
@@ -33,16 +40,15 @@ class Simulator:
 
     def randomly_rate_users(self, users: marketplace.users.Users, current_user_id):
         if self.stop_simulation:
-            print("early return")
             return
 
         rated_users= []
-        user_ids = [user_id for user_id in users.keys() if user_id != current_user_id]
+        user_ids = [user_id for user_id in users.users if user_id != current_user_id]
 
         for _ in range(35):
             random_user = random.choice(user_ids)
             stars = random.randint(1,5)
-            users[random_user].rate_user(stars)
+            users.users.get(random_user).rate_user(stars)
             rated_users.append(random_user)
 
         return rated_users

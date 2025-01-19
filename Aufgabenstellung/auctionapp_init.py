@@ -312,6 +312,7 @@ class AuctionAppInit:
         value = self.view_option.get()
 
         user_id = self._current_user.id()
+       # print(f"printing user_id {user_id} in add_myitems2items_list")
         user_id_pass = None
 
         if value == 'offered':
@@ -381,13 +382,16 @@ class AuctionAppInit:
         userid = self.username_entry.get()
         password = self.password_entry.get()
 
-        if userid in self._users and self._users.password_valid(userid, password):
-            self._current_user = self._users.get(userid)
-
+        #print(f"{userid} {password}")
+        #print(f"{userid in self._users.users and self._users.password_valid(userid, password)}")
+        if userid in self._users.users and self._users.password_valid(userid, password):
+            self._current_user = self._users.users.get(userid)
+            #print(f"erfolgreich eingeloggt userid: {userid}")
             self.system_messages.push("Erfolgreich eingeloggt.")
 
             self._auctions.start_simulation_init(userid)
-
+            #print(f"printing curren user:{self._current_user}")
+            #print(f"printing current userid: {self._current_user.id}")
             self.update_lists()
             self.enable_widgets()
         else:
@@ -586,7 +590,7 @@ class AuctionAppInit:
         self.mutual_friends_listbox.delete(0, tk.END)
 
         mutual_friends = self._users.suggest_friends(self._current_user.id(), 3)
-
+        #print(f"printing mutual friends: {mutual_friends} inside add_users2mutualfriends_list")
         self.mutual_friends_listbox.insert(0, *mutual_friends)
 
     def update_listbox_item(self, selected_index, auction_id):

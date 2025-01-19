@@ -7,6 +7,7 @@ import marketplace.user
 import marketplace.item
 import marketplace.stack
 import random
+
 from datetime import datetime, timedelta
 
 
@@ -84,6 +85,8 @@ class Auction:
         :param bid_amount: amount in € that user wants to bid
         :return: True, if bid was placed successfully, else False
         """
+
+
         if bid_amount > user.balance():         # has user enough money?
             return False
 

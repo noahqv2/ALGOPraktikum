@@ -17,15 +17,18 @@ class SetNode:
     """
 
     # *** CONSTRUCTORS ***
-    def __init__(self):
+    def __init__(self,user_id):
         """
         Initializes a new SetNode.
         """
         # TODO: werden nur für Praktikum 3 benötigt
-        self._parent = self  # parent Knoten des SetNode Objekts. self bedeutet, dass der Knoten ein Wurzelknoten ist
-        self._weight = 1  # Gewicht (Anzahl Knoten) des (Teil-)Baumes, der in dem SetNode Objekt verwurzelt ist
+        #self._parent = self  # parent Knoten des SetNode Objekts. self bedeutet, dass der Knoten ein Wurzelknoten ist
+        #self._weight = 1  # Gewicht (Anzahl Knoten) des (Teil-)Baumes, der in dem SetNode Objekt verwurzelt ist
+        self.user_id=user_id
+        self.parent = self
+        self.weight = 1
         
-    _praktikumsgruppe = None
+   # _praktikumsgruppe = None
 
     # *** PUBLIC SET methods ***
 
@@ -57,10 +60,64 @@ class Praktikumsgruppen(dict):
         """
         super().__init__()
         self._groups = {}
+
     # *** PUBLIC methods ***
+    def create_groups(self, user_ids, groupnumbers):
+        """
+        Creates groups from the provided user IDs and group numbers.
+        Args:
+        user_ids (list): A list of user IDs.
+        groupnumbers (list): A list of group numbers corresponding to the user IDs.
+        """
+
+        for user_id, group_number in zip(user_ids, groupnumbers):
+            if user_id not in self._groups:
+                self._groups[user_id] = SetNode(user_id)
+        for user_id, group_number in zip(user_ids, groupnumbers):
+                for other_user_id, other_group_number in zip(user_ids, groupnumbers):
+                    if group_number == other_group_number and user_id != other_user_id:
+                        #self.union(self._groups[user_id], self._groups[other_user_id])
+                        self.union(user_id, other_user_id)
+                # self._groups.setdefault(group_number, []).append(user_id)
+
+    #        print(self._groups) #DEBUG
+    #        new_userid_list = []
+    #        for group_id, group_members in self._groups.items():
+    #            print(group_members)
+    #            if "nasemota" in group_members:
+    #                for member in group_members:
+    #                    new_userid_list.append(member)
+    #                break
+    #        print (new_userid_list)
 
     # TODO in Praktikum 3: implement find(node), find_byid(user_id, return_id=False) and
     #  union(user_id1, user_id2)
+    def find(self, user_id):
+        if user_id not in self._groups:
+            return None
+        node=self._groups[user_id]
+        root=node
+        while root.parent != root:
+            root=root.parent
+
+        while node != root:
+            next_node=node.parent
+            node.parent=root
+            node=next_node
+        return root
+
+    def union(self,user_id1, user_id2):
+        root1 = self.find(user_id1)
+        root2 = self.find(user_id2)
+
+        if root1.weight < root2.weight:
+            root1.parent = root2
+            root2.weight += root1.weight
+        else:
+            root2.parent = root1
+            root1.weight += root2.weight
+
+
 
     # die Methode existiert nur aus Kompatibilitätsgründen und wird im 3. Praktikum implementiert
     def find_byid(self, user_id, return_id=False):
@@ -74,30 +131,17 @@ class Praktikumsgruppen(dict):
         Returns:
             SetNode or str: The root node or its ID, depending on return_id.
         """
+        root_node = self.find(user_id)
 
-        return user_id
+        if root_node is None:
+            return None
 
-    def create_groups(self, user_ids, groupnumbers):
-        """
-        Creates groups from the provided user IDs and group numbers.
+        if return_id:
+            return root_node.user_id
+        else:
+            return root_node
 
-        Args:
-            user_ids (list): A list of user IDs.
-            groupnumbers (list): A list of group numbers corresponding to the user IDs.
-        """
 
-        for user_id, group_number in zip(user_ids, groupnumbers):
-            self._groups.setdefault(group_number, []).append(user_id)
-
-#        print(self._groups) #DEBUG
-#        new_userid_list = []
-#        for group_id, group_members in self._groups.items():
-#            print(group_members)
-#            if "nasemota" in group_members:
-#                for member in group_members:
-#                    new_userid_list.append(member)
-#                break
-#        print (new_userid_list)
 
     # *** PUBLIC GET methods ***
 
@@ -112,16 +156,15 @@ class Praktikumsgruppen(dict):
         Returns:
             list: A list of user IDs in the same group.
         """
-        new_userid_list = []                                    # +1
-        for group_num,group_members in self._groups.items():    # +3        } 115 & 116 n-mal
-            if user_id in group_members:                        # +5        }
-                for member in group_members:                    # +1        } group_members hat genau 4 mitglieder
-                    new_userid_list.append(member)              # +1*4      }
-                break                                           # +1
-        return new_userid_list                                  # +1
+        node = self._groups.get(user_id)
+        if node is None:
+            return []
+        root = self.find(node)
+        return [value.user_id for value in self._groups.values() if self.find(value)==root]
 
 
     # *** PUBLIC STATIC methods ***
+
 
     # *** PRIVATE methods ***
 

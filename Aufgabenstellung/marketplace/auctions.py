@@ -185,7 +185,7 @@ class Auctions(dict):
 
         :param user_id:
         """
-        friends = self._users[user_id].friends()
+        friends = self._users.users.get(user_id).friends()
         friends_auctions = {}
 
         for friend_id in friends:
@@ -207,7 +207,7 @@ class Auctions(dict):
 
         :param user_id:
         """
-        friends = self._users[user_id].friends()
+        friends = self._users.users.get(user_id).friends()
         friends_auctions = {}
 
         for friend_id in friends:
@@ -236,7 +236,7 @@ class Auctions(dict):
     # TODO: in 3. Praktikum: nutze diese Methode und passe diese evtl. an
     def update_rating(self, user_id):
         if self._heap_users_rated is not None:
-            rating=self._users[user_id].get_rating_stars_mean()
+            rating=self._users.users.get(user_id).get_rating_stars_mean()
             self._heap_users_rated.refresh_rating(rating,user_id)
 
     def get_top_rated_user(self, with_num_stars=False):
@@ -333,7 +333,7 @@ class Auctions(dict):
         :param current_user_id:
         """
         if user_ids is None:
-            user_ids = list(self._users.keys())
+            user_ids = list(self._users.users.keys())
 
         # biete nur auf solche Auktionen die noch nicht beendet sind!
         auctions_active = self.get_active_auctions()
@@ -346,12 +346,13 @@ class Auctions(dict):
 
         for _ in range(num_bids):
             random_user = random.choice(user_ids)
+            #random_user = random.choice(self._users.get_user(user_ids))
             random_auction = random.choice(auction_ids)
 
             min_bid = self.get_item_value_min(random_auction)
 
             random_bid = min_bid + random.randint(1, 50)  # Zufälliger Betrag über dem Mindestgebot
-            self.bid_in_auction(random_auction, self._users[random_user], random_bid)
+            self.bid_in_auction(random_auction, self._users.users.get(random_user), random_bid)
 
             if show_message:
                 bid_by_current_customer = self.get_bid_of_user(random_auction, current_user_id)
@@ -362,6 +363,7 @@ class Auctions(dict):
 
     def _start_simulator(self, current_user_id: str):
         if self._stop_event.is_set():
+            print("returning")
             return
 
         self._my_simulator.place_random_bids(self, current_user_id)

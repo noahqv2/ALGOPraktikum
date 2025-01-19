@@ -44,7 +44,7 @@ class User(marketplace.praktikumsgruppen.SetNode):
         :param gps_coord: Tupel mit Längen- und Breitengrad des erfundenen Wohnorts des Nutzers
         :param address: String mit Adresse die zu GPS Koordinaten gehört
         """
-        super().__init__()
+        super().__init__(user_id)
 
         self._id = user_id
         self._password = password
@@ -83,6 +83,7 @@ class User(marketplace.praktikumsgruppen.SetNode):
     # *** PUBLIC methods ***
 
     def password_valid(self, password):
+        print(f"password: {password} self._password: {self._password}")
         return password == self._password
 
     def friends_add_list(self, friend_ids):
