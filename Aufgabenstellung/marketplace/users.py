@@ -5,7 +5,7 @@
 # damit man Users in Praktikumsgruppen einsortieren kann. Für das erste und zweite Praktikum ist die Klasse
 # Praktikumsgruppe lediglich ein Dictionary
 # in der Klasse werden die csv-Dateien user.csv und friends.csv gelesen.
-
+import re
 import csv
 import marketplace.user
 import marketplace.praktikumsgruppen
@@ -60,7 +60,6 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
 
     def calc_distance_between_users(self, user_id1, user_id2):
         # TODO for students: calculate distance between gps coordinates of user1 and user2 using a map and an
-         # algorithm that calculates the shortest distance on the map
         distance=0.0
         if map_graph is None:
             print("Graph konnte nicht geladen werden")
@@ -71,8 +70,6 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
             if not user1 or user2:
                 print("one or both not found")
                 return 10000
-
-            #point1 = user1.gps_coord or (ox.geocode(user1.address) if user1.address else None)
             point1=user1.gps_coord
             if point1 is None and user1.address:
                 point1 = user1.gps_coord
@@ -80,7 +77,6 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
             if point1 is None:
                 print("could not get coordinates point1")
                 return 10000
-            #point2 = user2.gps_coord or (ox.geocode(user2.address) if user2.address else None)
             point2 = user2.gps_coord
             if point2 is None and user2.address:
                 point2 = user2.gps_coord
@@ -106,6 +102,14 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         return distance
 
     # *** PUBLIC GET methods ***
+    def get_groupmembers(self, user_id):
+        if user_id not in self._groups:
+            return []
+        node = self._groups[user_id]
+        root = self.find(node.user_id)
+        if root is None:
+            return []
+        return [value.user_id for value in self._groups.values() if self.find(value.user_id) == root]
 
     def get_name_of_user(self, user_id):
         node = self[user_id]
@@ -129,11 +133,12 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         :return:
         """
         friends = self.users.get(user_id).friends()
-
+        print(friends)
         friend_names = [self.get_user_pretty_print_for_list(friend) for friend in friends]
 
-        group_members = self.get_groupmembers(user_id)
-        
+        #group_members = self.get_groupmembers(user_id)
+        group_members= self.get_groupmembers(user_id)
+        print(group_members)
         if group_members is None:
             return friend_names
 
@@ -184,65 +189,33 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         # TODO for students: Implement this method by filling the list suggested_friends
         suggested_friends = []
         close_and_connected_friends = []
-        #print("mututal_friend_count")
-        #print( mutual_friends_count)
-        #print(f"printing self.keys {self.keys()}")
+        friends_and_group_members= self.get_friends_andgroupmembers_pretty_print(user_id)
+        friends_and_group_members_ids = []
+
+        if friends_and_group_members and isinstance(friends_and_group_members[0], str):
+            for member_str in friends_and_group_members:
+                match = re.search(r"User: (\w+)", member_str)
+                if match:
+                    friends_and_group_members_ids.append(match.group(1))
+        else:
+            friends_and_group_members_ids = friends_and_group_members
+
         for other_user_id in self.users:
-            if other_user_id == user_id:
+            if other_user_id == user_id or other_user_id in friends_and_group_members_ids:
                 continue
+
             if distance_threshold > self.calc_distance_between_users(other_user_id, user_id):
                 if self.are_users_connected(user_id, other_user_id):
                     close_and_connected_friends.append(other_user_id)
-            elif other_user_id in mutual_friends_count:
-                if mutual_friends_count[other_user_id] >= num_common_friends:
-                    suggested_friends.append(other_user_id)
-                #print(f"inside elif{suggested_friends}")
-            else:
-                print(f"friend {other_user_id} in mutual friends list.\n")
-
-        friends_and_group_members = self.get_friends_andgroupmembers_pretty_print(user_id)
-
-        # Extract user IDs from pretty printed strings if necessary
-        friends_and_group_member_ids = []
-        if friends_and_group_members and isinstance(friends_and_group_members[0],
-                                                    str):  # Check if it's a list of strings
-            import re  # Needed to import re for regex
-            for member_str in friends_and_group_members:
-                match = re.search(r"GM-ID: (\w+)", member_str)  # Extract GM-ID using regex
-                if match:
-                    friends_and_group_member_ids.append(match.group(1))
-        else:  # if it is not a string, then it is a list of user_ids
-            friends_and_group_member_ids = friends_and_group_members
-
-        # Filter suggested friends
-        suggested_friends_filtered = []
-        for friend_id in suggested_friends:
-            if isinstance(friend_id, str):
-                match = re.search(r"GM-ID: (\w+)", friend_id)  # Extract GM-ID using regex
-                if match:
-                    friend_id = match.group(1)
-                else:
-                    continue  # if it is not a valid string, then continue
-            if friend_id not in friends_and_group_member_ids:
-                suggested_friends_filtered.append(friend_id)
-
-        # Filter close and connected friends
-        close_and_connected_friends_filtered = []
-        for friend_id in close_and_connected_friends:
-            if isinstance(friend_id, str):
-                match = re.search(r"GM-ID: (\w+)", friend_id)  # Extract GM-ID using regex
-                if match:
-                    friend_id = match.group(1)
-                else:
-                    continue  # if it is not a valid string, then continue
-            if friend_id not in friends_and_group_member_ids:
-                close_and_connected_friends_filtered.append(friend_id)
+            elif other_user_id in mutual_friends_count and mutual_friends_count[other_user_id] >= num_common_friends:
+                suggested_friends.append(other_user_id)
 
         if pretty_print:
-            suggested_friends_filtered = [self.users.get(friend).pretty_print() for friend in suggested_friends_filtered]
-            close_and_connected_friends_filtered = [self.users.get(friend).pretty_print() for friend in close_and_connected_friends_filtered]
+            suggested_friends = [self.users.get(friend).pretty_print() for friend in suggested_friends]
+            close_and_connected_friends = [self.users.get(friend).pretty_print() for friend in close_and_connected_friends]
 
-        return suggested_friends_filtered + close_and_connected_friends_filtered
+        return suggested_friends + close_and_connected_friends
+
         #return suggested_friends + close_and_connected_friends
 
     def are_users_connected(self, user_id1, user_id2, degree=3):
@@ -255,38 +228,26 @@ class Users(marketplace.praktikumsgruppen.Praktikumsgruppen):
         """
 
         if user_id1 not in self.users or user_id2 not in self.users:
-            print("returning false")
             return False
-        # TODO for students: Implement this method
 
+        queue = [(user_id1, 0)]
+        visited = {user_id1}
 
-        all_users= set()
-        all_users.add(user_id1)
-        all_users.add(user_id2)
-
-        queue= [user_id1]
-        visited= {user_id1}
-        current_degree = 0
-        while queue and current_degree <= degree:
-            next_level = []
-            for user in queue:
-                friends=self.get_mutual_friends(user)
+        while queue:
+            current_user, current_degree = queue.pop(0)
+            if current_user == user_id2:
+                return True
+            if current_degree < degree:
+                friends = self.get_mutual_friends(current_user)
                 for friend in friends:
                     if friend not in visited:
-                        all_users.add(friend)
-                        next_level.append(friend)
+                        queue.append((friend, current_degree + 1))
+
                         visited.add(friend)
-            queue=next_level
-            current_degree += 1
 
-        for user in all_users:
-            friends=self.get_mutual_friends(user)
-            for friend in friends:
-                if friend in all_users:
-                    self.union(user, friend)
+        return False
 
-       # print(f"printing return inside are_users_connected {self.find(parent, user_id1)==self.find(parent, user_id2)}")
-        return self.find( user_id1)==self.find( user_id2)
+        # print(f"printing return inside are_users_connected {self.find(parent, user_id1)==self.find(parent, user_id2)}")
 
     # *** PUBLIC STATIC methods ***
 

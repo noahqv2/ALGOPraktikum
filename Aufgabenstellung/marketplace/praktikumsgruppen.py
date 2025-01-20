@@ -22,8 +22,6 @@ class SetNode:
         Initializes a new SetNode.
         """
         # TODO: werden nur für Praktikum 3 benötigt
-        #self._parent = self  # parent Knoten des SetNode Objekts. self bedeutet, dass der Knoten ein Wurzelknoten ist
-        #self._weight = 1  # Gewicht (Anzahl Knoten) des (Teil-)Baumes, der in dem SetNode Objekt verwurzelt ist
         self.user_id=user_id
         self.parent = self
         self.weight = 1
@@ -76,7 +74,6 @@ class Praktikumsgruppen(dict):
         for user_id, group_number in zip(user_ids, groupnumbers):
                 for other_user_id, other_group_number in zip(user_ids, groupnumbers):
                     if group_number == other_group_number and user_id != other_user_id:
-                        #self.union(self._groups[user_id], self._groups[other_user_id])
                         self.union(user_id, other_user_id)
                 # self._groups.setdefault(group_number, []).append(user_id)
 
@@ -93,6 +90,14 @@ class Praktikumsgruppen(dict):
     # TODO in Praktikum 3: implement find(node), find_byid(user_id, return_id=False) and
     #  union(user_id1, user_id2)
     def find(self, user_id):
+       #node = self._groups[user_id]
+       #if node.parent[user_id] == self:
+       #    return node
+       #node.parent=self.find(node.parent.user_id)
+       #return node.parent
+
+
+
         if user_id not in self._groups:
             return None
         node=self._groups[user_id]
@@ -171,3 +176,20 @@ class Praktikumsgruppen(dict):
     # *** PUBLIC methods to return class properties ***
 
     # *** PRIVATE variables ***
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
